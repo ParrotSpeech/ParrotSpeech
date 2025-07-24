@@ -165,3 +165,5 @@ synth_output/
 
 matcha/data/LJSpeech-1.1/
 *.ckpt
+
+.DS_Store
