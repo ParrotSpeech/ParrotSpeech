@@ -3,7 +3,7 @@
 Parrotspeech is a text-to-speech (TTS) system based on the Matcha architecture, which is a PyTorch implementation of the paper. It is designed to be efficient, flexible, and easy to use for both research and production purposes.
 
 <p align="center">
-	<img src="https://github.com/ParrotSpeech/ParrotSpeech/blob/master/logo.png">
+	<img src="https://github.com/ParrotSpeech/ParrotSpeech/blob/main/logo.png">
 </p>
 
 <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/parrotspeech/parrotspeech"><a href="https://github.com/parrotspeech/parrotspeech/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/parrotspeech/parrotspeech"></a>
