@@ -1,0 +1,7 @@
+[project]
+name = "parrotspeech"
+version = "0.1.0"
+description = "ParrotSpeech is a Python library for speech synthesis."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
