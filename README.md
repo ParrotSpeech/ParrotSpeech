@@ -1,6 +1,6 @@
 
 <p align="center">
-	<img src="https://github.com/ParrotSpeech/ParrotSpeech/blob/main/logo.png">
+	<img src="https://github.com/ParrotSpeech/ParrotSpeech/blob/main/logo.svg">
 </p>
 
 <p align="center">
