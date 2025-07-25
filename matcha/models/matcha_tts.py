@@ -20,7 +20,7 @@ from matcha.utils.model import (
 log = utils.get_pylogger(__name__)
 
 
-class MatchaTTS(BaseLightningClass):  # 🍵
+class MatchaTTS(BaseLightningClass):  # 🦜
     def __init__(
         self,
         n_vocab,
@@ -204,7 +204,7 @@ class MatchaTTS(BaseLightningClass):  # 🍵
 
         # Cut a small segment of mel-spectrogram in order to increase batch size
         #   - "Hack" taken from Grad-TTS, in case of Grad-TTS, we cannot train batch size 32 on a 24GB GPU without it
-        #   - Do not need this hack for Matcha-TTS, but it works with it as well
+        #   - Do not need this hack for ParrotSpeech, but it works with it as well
         if not isinstance(out_size, type(None)):
             max_offset = (y_lengths - out_size).clamp(0)
             offset_ranges = list(zip([0] * max_offset.shape[0], max_offset.cpu().numpy()))

@@ -89,7 +89,7 @@ def get_inputs(is_multi_speaker):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Export 🍵 Matcha-TTS to ONNX")
+    parser = argparse.ArgumentParser(description="Export 🦜 ParrotSpeech to ONNX")
 
     parser.add_argument(
         "checkpoint_path",
@@ -117,7 +117,7 @@ def main():
 
     args = parser.parse_args()
 
-    print(f"[🍵] Loading Matcha checkpoint from {args.checkpoint_path}")
+    print(f"[🦜] Loading Matcha checkpoint from {args.checkpoint_path}")
     print(f"Setting n_timesteps to {args.n_timesteps}")
 
     checkpoint_path = Path(args.checkpoint_path)
@@ -174,7 +174,7 @@ def main():
         export_params=True,
         do_constant_folding=True,
     )
-    print(f"[🍵] ONNX model exported to  {args.output}")
+    print(f"[🦜] ONNX model exported to  {args.output}")
 
 
 if __name__ == "__main__":

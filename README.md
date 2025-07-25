@@ -42,7 +42,7 @@ from source
 
 ```bash
 pip install git+https://github.com/ParrotSpeech/ParrotSpeech.git
-cd Matcha-TTS
+cd ParrotSpeech
 pip install -e .
 ```
 
@@ -107,11 +107,11 @@ Let's assume we are training with LJ Speech
 
 1. Download the dataset from [here](https://keithito.com/LJ-Speech-Dataset/), extract it to `data/LJSpeech-1.1`, and prepare the file lists to point to the extracted data like for [item 5 in the setup of the NVIDIA Tacotron 2 repo](https://github.com/NVIDIA/tacotron2#setup).
 
-2. Clone and enter the Matcha-TTS repository
+2. Clone and enter the ParrotSpeech repository
 
 ```bash
 git clone https://github.com/ParrotSpeech/ParrotSpeech.git
-cd Matcha-TTS
+cd ParrotSpeech
 ```
 
 3. Install the package from source
@@ -239,7 +239,7 @@ python3 -m matcha.onnx.infer model.onnx --text "hey" --output-dir ./outputs --vo
 
 This will write `.wav` audio files to the output directory.
 
-## Extract phoneme alignments from Matcha-TTS
+## Extract phoneme alignments from ParrotSpeech
 
 If the dataset is structured as
 
@@ -254,7 +254,7 @@ data/
     └── wavs
 ```
 
-Then you can extract the phoneme level alignments from a Trained Matcha-TTS model using:
+Then you can extract the phoneme level alignments from a Trained ParrotSpeech model using:
 
 ```bash
 python  matcha/utils/get_durations_from_trained_model.py -i dataset_yaml -c <checkpoint>

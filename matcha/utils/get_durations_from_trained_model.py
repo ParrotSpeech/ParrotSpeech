@@ -50,7 +50,7 @@ def compute_durations(data_loader: torch.utils.data.DataLoader, model: nn.Module
         device (torch.device): GPU or CPU
     """
 
-    for batch in tqdm(data_loader, desc="🍵 Computing durations 🍵:"):
+    for batch in tqdm(data_loader, desc="🦜 Computing durations 🦜:"):
         x, x_lengths = batch["x"], batch["x_lengths"]
         y, y_lengths = batch["y"], batch["y_lengths"]
         spks = batch["spks"]

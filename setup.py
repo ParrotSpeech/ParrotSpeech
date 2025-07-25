@@ -29,7 +29,7 @@ def get_requires():
 setup(
     name="matcha-tts",
     version=version,
-    description="🍵 Matcha-TTS: A fast TTS architecture with conditional flow matching",
+    description="🦜ParrotSpeech: A fast TTS architecture with conditional flow matching",
     long_description=README,
     long_description_content_type="text/markdown",
     author="Thanh Hoang-Minh",

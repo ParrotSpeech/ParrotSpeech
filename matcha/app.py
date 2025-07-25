@@ -147,12 +147,12 @@ def ljspeech_example_cacher(text, n_timesteps, mel_temp, length_scale, spk=-1):
 
 
 def main():
-    description = """# 🍵 Matcha-TTS: A fast TTS architecture with conditional flow matchinglow matching (similar to rectified flows) to speed up ODE-based speech synthesis. Our method:
+    description = """# 🦜 ParrotSpeech: A fast TTS architecture with conditional flow matchinglow matching (similar to rectified flows) to speed up ODE-based speech synthesis. Our method:
 
     Cached examples are available at the bottom of the page.
     """
 
-    with gr.Blocks(title="🍵 Matcha-TTS: A fast TTS architecture with conditional flow matching") as demo:
+    with gr.Blocks(title="🦜 ParrotSpeech: A fast TTS architecture with conditional flow matching") as demo:
         processed_text = gr.State(value=None)
         processed_text_len = gr.State(value=None)
 
@@ -160,7 +160,7 @@ def main():
             with gr.Row():
                 gr.Markdown(description, scale=3)
                 with gr.Column():
-                    gr.Image(LOGO_URL, label="Matcha-TTS logo", height=50, width=50, scale=1, show_label=False)
+                    gr.Image(LOGO_URL, label="ParrotSpeech logo", height=50, width=50, scale=1, show_label=False)
                     html = '<br><iframe width="560" height="315" src="https://www.youtube.com/embed/xmvJkz3bqw0?si=jN7ILyDsbPwJCGoa" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>'
                     gr.HTML(html)
 
@@ -224,7 +224,7 @@ def main():
             examples = gr.Examples(  # pylint: disable=unused-variable
                 examples=[
                     [
-                        "We propose Matcha-TTS, a new approach to non-autoregressive neural TTS, that uses conditional flow matching (similar to rectified flows) to speed up O D E-based speech synthesis.",
+                        "We propose ParrotSpeech, a new approach to non-autoregressive neural TTS, that uses conditional flow matching (similar to rectified flows) to speed up O D E-based speech synthesis.",
                         50,
                         0.677,
                         0.95,
@@ -276,35 +276,35 @@ def main():
             multi_speaker_examples = gr.Examples(  # pylint: disable=unused-variable
                 examples=[
                     [
-                        "Hello everyone! I am speaker 0 and I am here to tell you that Matcha-TTS is amazing!",
+                        "Hello everyone! I am speaker 0 and I am here to tell you that ParrotSpeech is amazing!",
                         10,
                         0.677,
                         0.85,
                         0,
                     ],
                     [
-                        "Hello everyone! I am speaker 16 and I am here to tell you that Matcha-TTS is amazing!",
+                        "Hello everyone! I am speaker 16 and I am here to tell you that ParrotSpeech is amazing!",
                         10,
                         0.677,
                         0.85,
                         16,
                     ],
                     [
-                        "Hello everyone! I am speaker 44 and I am here to tell you that Matcha-TTS is amazing!",
+                        "Hello everyone! I am speaker 44 and I am here to tell you that ParrotSpeech is amazing!",
                         50,
                         0.677,
                         0.85,
                         44,
                     ],
                     [
-                        "Hello everyone! I am speaker 45 and I am here to tell you that Matcha-TTS is amazing!",
+                        "Hello everyone! I am speaker 45 and I am here to tell you that ParrotSpeech is amazing!",
                         50,
                         0.677,
                         0.85,
                         45,
                     ],
                     [
-                        "Hello everyone! I am speaker 58 and I am here to tell you that Matcha-TTS is amazing!",
+                        "Hello everyone! I am speaker 58 and I am here to tell you that ParrotSpeech is amazing!",
                         4,
                         0.677,
                         0.85,

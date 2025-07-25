@@ -29,7 +29,7 @@ def write_wavs(model, inputs, output_dir, external_vocoder=None):
         infer_secs = perf_counter() - t0
         mel_infer_secs = vocoder_infer_secs = None
     else:
-        print("[🍵] Generating mel using Matcha")
+        print("[🦜] Generating mel using Matcha")
         mel_t0 = perf_counter()
         mels, mel_lengths = model.run(None, inputs)
         mel_infer_secs = perf_counter() - mel_t0
@@ -84,7 +84,7 @@ def write_mels(model, inputs, output_dir):
 
 def main():
     parser = argparse.ArgumentParser(
-        description=" 🍵 Matcha-TTS: A fast TTS architecture with conditional flow matching"
+        description=" 🦜 ParrotSpeech: A fast TTS architecture with conditional flow matching"
     )
     parser.add_argument(
         "model",

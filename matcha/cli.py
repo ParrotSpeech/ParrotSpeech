@@ -207,7 +207,7 @@ def validate_args_for_single_speaker_model(args):
 @torch.inference_mode()
 def cli():
     parser = argparse.ArgumentParser(
-        description=" 🍵 Matcha-TTS: A fast TTS architecture with conditional flow matching"
+        description=" 🦜 ParrotSpeech: A fast TTS architecture with conditional flow matching"
     )
     parser.add_argument(
         "--model",
@@ -273,7 +273,7 @@ def cli():
     paths = assert_required_models_available(args)
 
     if args.checkpoint_path is not None:
-        print(f"[🍵] Loading custom model from {args.checkpoint_path}")
+        print(f"[🦜] Loading custom model from {args.checkpoint_path}")
         paths["matcha"] = args.checkpoint_path
         args.model = "custom_model"
 
@@ -339,8 +339,8 @@ def batched_synthesis(args, device, model, vocoder, denoiser, texts, spk):
         output["waveform"] = to_waveform(output["mel"], vocoder, denoiser, args.denoiser_strength)
         t = (dt.datetime.now() - start_t).total_seconds()
         rtf_w = t * 22050 / (output["waveform"].shape[-1])
-        print(f"[🍵-Batch: {i}] Matcha-TTS RTF: {output['rtf']:.4f}")
-        print(f"[🍵-Batch: {i}] Matcha-TTS + VOCODER RTF: {rtf_w:.4f}")
+        print(f"[🦜-Batch: {i}] ParrotSpeech RTF: {output['rtf']:.4f}")
+        print(f"[🦜-Batch: {i}] ParrotSpeech + VOCODER RTF: {rtf_w:.4f}")
         total_rtf.append(output["rtf"])
         total_rtf_w.append(rtf_w)
         for j in range(output["mel"].shape[0]):
@@ -348,12 +348,12 @@ def batched_synthesis(args, device, model, vocoder, denoiser, texts, spk):
             length = output["mel_lengths"][j]
             new_dict = {"mel": output["mel"][j][:, :length], "waveform": output["waveform"][j][: length * 256]}
             location = save_to_folder(base_name, new_dict, args.output_folder)
-            print(f"[🍵-{j}] Waveform saved: {location}")
+            print(f"[🦜-{j}] Waveform saved: {location}")
 
     print("".join(["="] * 100))
-    print(f"[🍵] Average Matcha-TTS RTF: {np.mean(total_rtf):.4f} ± {np.std(total_rtf)}")
-    print(f"[🍵] Average Matcha-TTS + VOCODER RTF: {np.mean(total_rtf_w):.4f} ± {np.std(total_rtf_w)}")
-    print("[🍵] Enjoy the freshly whisked 🍵 Matcha-TTS!")
+    print(f"[🦜] Average ParrotSpeech RTF: {np.mean(total_rtf):.4f} ± {np.std(total_rtf)}")
+    print(f"[🦜] Average ParrotSpeech + VOCODER RTF: {np.mean(total_rtf_w):.4f} ± {np.std(total_rtf_w)}")
+    print("[🦜] Enjoy the freshly whisked 🦜 ParrotSpeech!")
 
 
 def unbatched_synthesis(args, device, model, vocoder, denoiser, texts, spk):
@@ -367,7 +367,7 @@ def unbatched_synthesis(args, device, model, vocoder, denoiser, texts, spk):
         text = text.strip()
         text_processed = process_text(i, text, device)
 
-        print(f"[🍵] Whisking Matcha-T(ea)TS for: {i}")
+        print(f"[🦜] Whisking Matcha-T(ea)TS for: {i}")
         start_t = dt.datetime.now()
         output = model.synthesise(
             text_processed["x"],
@@ -381,8 +381,8 @@ def unbatched_synthesis(args, device, model, vocoder, denoiser, texts, spk):
         # RTF with HiFiGAN
         t = (dt.datetime.now() - start_t).total_seconds()
         rtf_w = t * 22050 / (output["waveform"].shape[-1])
-        print(f"[🍵-{i}] Matcha-TTS RTF: {output['rtf']:.4f}")
-        print(f"[🍵-{i}] Matcha-TTS + VOCODER RTF: {rtf_w:.4f}")
+        print(f"[🦜-{i}] ParrotSpeech RTF: {output['rtf']:.4f}")
+        print(f"[🦜-{i}] ParrotSpeech + VOCODER RTF: {rtf_w:.4f}")
         total_rtf.append(output["rtf"])
         total_rtf_w.append(rtf_w)
 
@@ -390,9 +390,9 @@ def unbatched_synthesis(args, device, model, vocoder, denoiser, texts, spk):
         print(f"[+] Waveform saved: {location}")
 
     print("".join(["="] * 100))
-    print(f"[🍵] Average Matcha-TTS RTF: {np.mean(total_rtf):.4f} ± {np.std(total_rtf)}")
-    print(f"[🍵] Average Matcha-TTS + VOCODER RTF: {np.mean(total_rtf_w):.4f} ± {np.std(total_rtf_w)}")
-    print("[🍵] Enjoy the freshly whisked 🍵 Matcha-TTS!")
+    print(f"[🦜] Average ParrotSpeech RTF: {np.mean(total_rtf):.4f} ± {np.std(total_rtf)}")
+    print(f"[🦜] Average ParrotSpeech + VOCODER RTF: {np.mean(total_rtf_w):.4f} ± {np.std(total_rtf_w)}")
+    print("[🦜] Enjoy the freshly whisked 🦜 ParrotSpeech!")
 
 
 def print_config(args):
