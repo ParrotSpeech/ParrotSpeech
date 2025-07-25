@@ -38,7 +38,7 @@ def VOCODER_LOC(x):
     return LOCATION / f"{x}"
 
 
-LOGO_URL = "https://shivammehta25.github.io/Matcha-TTS/images/logo.png"
+LOGO_URL = "https://parrotspeech.github.io/logo.png"
 RADIO_OPTIONS = {
     "Multi Speaker (VCTK)": {
         "model": "matcha_vctk",
@@ -147,19 +147,7 @@ def ljspeech_example_cacher(text, n_timesteps, mel_temp, length_scale, spk=-1):
 
 
 def main():
-    description = """# 🍵 Matcha-TTS: A fast TTS architecture with conditional flow matching
-    ### [Shivam Mehta](https://www.kth.se/profile/smehta), [Ruibo Tu](https://www.kth.se/profile/ruibo), [Jonas Beskow](https://www.kth.se/profile/beskow), [Éva Székely](https://www.kth.se/profile/szekely), and [Gustav Eje Henter](https://people.kth.se/~ghe/)
-    We propose 🍵 Matcha-TTS, a new approach to non-autoregressive neural TTS, that uses conditional flow matching (similar to rectified flows) to speed up ODE-based speech synthesis. Our method:
-
-
-    * Is probabilistic
-    * Has compact memory footprint
-    * Sounds highly natural
-    * Is very fast to synthesise from
-
-
-    Check out our [demo page](https://shivammehta25.github.io/Matcha-TTS). Read our [arXiv preprint for more details](https://arxiv.org/abs/2309.03199).
-    Code is available in our [GitHub repository](https://github.com/shivammehta25/Matcha-TTS), along with pre-trained models.
+    description = """# 🍵 Matcha-TTS: A fast TTS architecture with conditional flow matchinglow matching (similar to rectified flows) to speed up ODE-based speech synthesis. Our method:
 
     Cached examples are available at the bottom of the page.
     """

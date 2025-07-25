@@ -1,26 +1,33 @@
 # ParrotSpeech
-parrotspeech
 
+Parrotspeech is a text-to-speech (TTS) system based on the Matcha architecture, which is a PyTorch implementation of the paper. It is designed to be efficient, flexible, and easy to use for both research and production purposes.
+
+![Logo ParrotSpeech](./logo.png)
 
 ## Installation
 
 1. Create an environment (suggested but optional)
 
-```
-conda create -n matcha-tts python=3.10 -y
-conda activate matcha-tts
+```bash
+# Install uv if you don't have it already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create a virtual environment
+uv venv .venv
+source .venv/bin/activate
+uv pip install -e .
 ```
 
-2. Install Matcha TTS using pip or from source
+1. Install Matcha TTS using pip or from source
 
 ```bash
-pip install matcha-tts
+pip install parrot
 ```
 
 from source
 
 ```bash
-pip install git+https://github.com/shivammehta25/Matcha-TTS.git
+pip install git+https://github.com/ParrotSpeech/ParrotSpeech.git
 cd Matcha-TTS
 pip install -e .
 ```
@@ -29,13 +36,13 @@ pip install -e .
 
 ```bash
 # This will download the required models
-matcha-tts --text "<INPUT TEXT>"
+parrot --text "<INPUT TEXT>"
 ```
 
 or
 
 ```bash
-matcha-tts-app
+parrot-app
 ```
 
 or open `synthesis.ipynb` on jupyter notebook
@@ -45,19 +52,19 @@ or open `synthesis.ipynb` on jupyter notebook
 - To synthesise from given text, run:
 
 ```bash
-matcha-tts --text "<INPUT TEXT>"
+parrot --text "<INPUT TEXT>"
 ```
 
 - To synthesise from a file, run:
 
 ```bash
-matcha-tts --file <PATH TO FILE>
+parrot --file <PATH TO FILE>
 ```
 
 - To batch synthesise from a file, run:
 
 ```bash
-matcha-tts --file <PATH TO FILE> --batched
+parrot --file <PATH TO FILE> --batched
 ```
 
 Additional arguments
@@ -65,19 +72,19 @@ Additional arguments
 - Speaking rate
 
 ```bash
-matcha-tts --text "<INPUT TEXT>" --speaking_rate 1.0
+parrot --text "<INPUT TEXT>" --speaking_rate 1.0
 ```
 
 - Sampling temperature
 
 ```bash
-matcha-tts --text "<INPUT TEXT>" --temperature 0.667
+parrot --text "<INPUT TEXT>" --temperature 0.667
 ```
 
 - Euler ODE solver steps
 
 ```bash
-matcha-tts --text "<INPUT TEXT>" --steps 10
+parrot --text "<INPUT TEXT>" --steps 10
 ```
 
 ## Train with your own dataset
@@ -89,7 +96,7 @@ Let's assume we are training with LJ Speech
 2. Clone and enter the Matcha-TTS repository
 
 ```bash
-git clone https://github.com/shivammehta25/Matcha-TTS.git
+git clone https://github.com/ParrotSpeech/ParrotSpeech.git
 cd Matcha-TTS
 ```
 
@@ -151,7 +158,7 @@ python matcha/train.py experiment=ljspeech trainer.devices=[0,1]
 7. Synthesise from the custom trained model
 
 ```bash
-matcha-tts --text "<INPUT TEXT>" --checkpoint_path <PATH TO CHECKPOINT>
+parrot --text "<INPUT TEXT>" --checkpoint_path <PATH TO CHECKPOINT>
 ```
 
 ## ONNX support
@@ -232,28 +239,37 @@ data/
     ├── val.txt
     └── wavs
 ```
+
 Then you can extract the phoneme level alignments from a Trained Matcha-TTS model using:
+
 ```bash
 python  matcha/utils/get_durations_from_trained_model.py -i dataset_yaml -c <checkpoint>
 ```
+
 Example:
+
 ```bash
 python  matcha/utils/get_durations_from_trained_model.py -i ljspeech.yaml -c matcha_ljspeech.ckpt
 ```
+
 or simply:
+
 ```bash
 matcha-tts-get-durations -i ljspeech.yaml -c matcha_ljspeech.ckpt
 ```
+
 ---
+
 ## Train using extracted alignments
 
 In the datasetconfig turn on load duration.
 Example: `ljspeech.yaml`
+
 ```
 load_durations: True
 ```
-or see an examples in configs/experiment/ljspeech_from_durations.yaml
 
+or see an examples in configs/experiment/ljspeech_from_durations.yaml
 
 ## Citation information
 
