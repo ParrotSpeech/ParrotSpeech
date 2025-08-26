@@ -39,8 +39,8 @@ parser.add_argument(
     "-c",
     "--config",
     type=str,
-    default=os.path.join(files("f5_tts").joinpath("infer/examples/basic"), "basic.toml"),
-    help="The configuration file, default see infer/examples/basic/basic.toml",
+    default=os.path.join(files("parrotspeech").joinpath("inference/examples/basic"), "basic.toml"),
+    help="The configuration file, default see inference/examples/basic/basic.toml",
 )
 
 
@@ -176,7 +176,7 @@ model = args.model or config.get("model", "F5TTS_v1_Base")
 ckpt_file = args.ckpt_file or config.get("ckpt_file", "")
 vocab_file = args.vocab_file or config.get("vocab_file", "")
 
-ref_audio = args.ref_audio or config.get("ref_audio", "infer/examples/basic/basic_ref_en.wav")
+ref_audio = args.ref_audio or config.get("ref_audio", "inference/examples/basic/basic_ref_en.wav")
 ref_text = (
     args.ref_text
     if args.ref_text is not None
@@ -205,15 +205,15 @@ fix_duration = args.fix_duration or config.get("fix_duration", fix_duration)
 
 
 # patches for pip pkg user
-if "infer/examples/" in ref_audio:
-    ref_audio = str(files("f5_tts").joinpath(f"{ref_audio}"))
-if "infer/examples/" in gen_file:
-    gen_file = str(files("f5_tts").joinpath(f"{gen_file}"))
+if "inference/examples/" in ref_audio:
+    ref_audio = str(files("parrotspeech").joinpath(f"{ref_audio}"))
+if "inference/examples/" in gen_file:
+    gen_file = str(files("parrotspeech").joinpath(f"{gen_file}"))
 if "voices" in config:
     for voice in config["voices"]:
         voice_ref_audio = config["voices"][voice]["ref_audio"]
-        if "infer/examples/" in voice_ref_audio:
-            config["voices"][voice]["ref_audio"] = str(files("f5_tts").joinpath(f"{voice_ref_audio}"))
+        if "inference/examples/" in voice_ref_audio:
+            config["voices"][voice]["ref_audio"] = str(files("parrotspeech").joinpath(f"{voice_ref_audio}"))
 
 
 # ignore gen_text if gen_file provided
@@ -245,7 +245,7 @@ vocoder = load_vocoder(vocoder_name=vocoder_name, is_local=load_vocoder_from_loc
 # load TTS model
 
 model_cfg = OmegaConf.load(
-    args.model_cfg or config.get("model_cfg", str(files("f5_tts").joinpath(f"configs/{model}.yaml")))
+    args.model_cfg or config.get("model_cfg", str(files("parrotspeech").joinpath(f"configs/{model}.yaml")))
 ).model
 model_cls = globals()[model_cfg.backbone]
 

@@ -89,12 +89,12 @@ And a `.toml` file would help with more flexible usage.
 f5-tts_infer-cli -c custom.toml
 ```
 
-For example, you can use `.toml` to pass in variables, refer to `src/f5_tts/infer/examples/basic/basic.toml`:
+For example, you can use `.toml` to pass in variables, refer to `src/f5_tts/inference/examples/basic/basic.toml`:
 
 ```toml
 # F5TTS_v1_Base | E2TTS_Base
 model = "F5TTS_v1_Base"
-ref_audio = "infer/examples/basic/basic_ref_en.wav"
+ref_audio = "inference/examples/basic/basic_ref_en.wav"
 # If an empty "", transcribes the reference audio automatically.
 ref_text = "Some call me nature, others call me mother nature."
 gen_text = "I don't really care what you call me. I've been a silent spectator, watching species evolve, empires rise and fall. But always remember, I am mighty and enduring."
@@ -104,29 +104,29 @@ remove_silence = false
 output_dir = "tests"
 ```
 
-You can also leverage `.toml` file to do multi-style generation, refer to `src/f5_tts/infer/examples/multi/story.toml`.
+You can also leverage `.toml` file to do multi-style generation, refer to `src/f5_tts/inference/examples/multi/story.toml`.
 
 ```toml
 # F5TTS_v1_Base | E2TTS_Base
 model = "F5TTS_v1_Base"
-ref_audio = "infer/examples/multi/main.flac"
+ref_audio = "inference/examples/multi/main.flac"
 # If an empty "", transcribes the reference audio automatically.
 ref_text = ""
 gen_text = ""
 # File with text to generate. Ignores the text above.
-gen_file = "infer/examples/multi/story.txt"
+gen_file = "inference/examples/multi/story.txt"
 remove_silence = true
 output_dir = "tests"
 
 [voices.town]
-ref_audio = "infer/examples/multi/town.flac"
+ref_audio = "inference/examples/multi/town.flac"
 ref_text = ""
 
 [voices.country]
-ref_audio = "infer/examples/multi/country.flac"
+ref_audio = "inference/examples/multi/country.flac"
 ref_text = ""
 ```
-You should mark the voice with `[main]` `[town]` `[country]` whenever you want to change voice, refer to `src/f5_tts/infer/examples/multi/story.txt`.
+You should mark the voice with `[main]` `[town]` `[country]` whenever you want to change voice, refer to `src/f5_tts/inference/examples/multi/story.txt`.
 
 ## Socket Real-time Service
 

@@ -30,7 +30,7 @@ use_ema = True
 target_rms = 0.1
 
 
-rel_path = str(files("f5_tts").joinpath("../../"))
+rel_path = str(files("parrotspeech").joinpath("../../"))
 
 
 def main():
@@ -64,7 +64,7 @@ def main():
     use_truth_duration = False
     no_ref_audio = False
 
-    model_cfg = OmegaConf.load(str(files("f5_tts").joinpath(f"configs/{exp_name}.yaml")))
+    model_cfg = OmegaConf.load(str(files("parrotspeech").joinpath(f"configs/{exp_name}.yaml")))
     model_cls = globals()[model_cfg.model.backbone]
     model_arc = model_cfg.model.arch
 

@@ -32,7 +32,7 @@ class F5TTS:
         device=None,
         hf_cache_dir=None,
     ):
-        model_cfg = OmegaConf.load(str(files("f5_tts").joinpath(f"configs/{model}.yaml")))
+        model_cfg = OmegaConf.load(str(files("parrotspeech").joinpath(f"configs/{model}.yaml")))
         model_cls = globals()[model_cfg.model.backbone]
         model_arc = model_cfg.model.arch
 
@@ -154,11 +154,11 @@ if __name__ == "__main__":
     f5tts = F5TTS()
 
     wav, sr, spec = f5tts.infer(
-        ref_file=str(files("f5_tts").joinpath("infer/examples/basic/basic_ref_en.wav")),
+        ref_file=str(files("parrotspeech").joinpath("inference/examples/basic/basic_ref_en.wav")),
         ref_text="some call me nature, others call me mother nature.",
         gen_text="""I don't really care what you call me. I've been a silent spectator, watching species evolve, empires rise and fall. But always remember, I am mighty and enduring. Respect me and I'll nurture you; ignore me and you shall face the consequences.""",
-        file_wave=str(files("f5_tts").joinpath("../../tests/api_out.wav")),
-        file_spec=str(files("f5_tts").joinpath("../../tests/api_out.png")),
+        file_wave=str(files("parrotspeech").joinpath("../../tests/api_out.wav")),
+        file_spec=str(files("parrotspeech").joinpath("../../tests/api_out.png")),
         seed=None,
     )
 

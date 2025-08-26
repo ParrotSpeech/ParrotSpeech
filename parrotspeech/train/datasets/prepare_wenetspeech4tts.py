@@ -109,7 +109,7 @@ if __name__ == "__main__":
         "<SOME_PATH>/WenetSpeech4TTS/Standard",
         "<SOME_PATH>/WenetSpeech4TTS/Premium",
     ][-dataset_choice:]
-    save_dir = str(files("f5_tts").joinpath("../../")) + f"/data/{dataset_name}"
+    save_dir = str(files("parrotspeech").joinpath("../../")) + f"/data/{dataset_name}"
     print(f"\nChoose Dataset: {dataset_name}, will save to {save_dir}\n")
 
     main()

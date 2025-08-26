@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 80.9.0", "setuptools-scm>=9.2.0"]
+requires = ["setuptools >= 61.0", "setuptools-scm>=9.2.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
@@ -21,9 +21,12 @@ dependencies = [
     "click",
     "datasets",
     "ema_pytorch",
+    "faster-whisper>=1.2.0",
+    "funasr>=1.2.7",
     "gradio",
     "hydra-core>=1.3.0",
     "jieba",
+    "jiwer>=4.0.0",
     "librosa",
     "matplotlib",
     "numpy<=1.26.4",
@@ -31,6 +34,7 @@ dependencies = [
     "pydub",
     "pypinyin",
     "safetensors",
+    "setuptools-scm>=9.2.0",
     "soundfile",
     "tomli",
     "torch>=2.0.0",

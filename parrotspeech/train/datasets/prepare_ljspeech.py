@@ -59,7 +59,7 @@ if __name__ == "__main__":
     dataset_dir = "<SOME_PATH>/LJSpeech-1.1"
     dataset_name = f"LJSpeech_{tokenizer}"
     meta_info = os.path.join(dataset_dir, "metadata.csv")
-    save_dir = str(files("f5_tts").joinpath("../../")) + f"/data/{dataset_name}"
+    save_dir = str(files("parrotspeech").joinpath("../../")) + f"/data/{dataset_name}"
     print(f"\nPrepare for {dataset_name}, will save to {save_dir}\n")
 
     main()

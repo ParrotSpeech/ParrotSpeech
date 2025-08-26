@@ -42,9 +42,9 @@ last_device = ""
 last_ema = None
 
 
-path_data = str(files("f5_tts").joinpath("../../data"))
-path_project_ckpts = str(files("f5_tts").joinpath("../../ckpts"))
-file_train = str(files("f5_tts").joinpath("train/finetune_cli.py"))
+path_data = str(files("parrotspeech").joinpath("../../data"))
+path_project_ckpts = str(files("parrotspeech").joinpath("../../ckpts"))
+file_train = str(files("parrotspeech").joinpath("train/finetune_cli.py"))
 
 device = (
     "cuda"

@@ -17,7 +17,7 @@ from parrotspeech.eval.utils_eval import (
     run_sim,
 )
 
-rel_path = str(files("f5_tts").joinpath("../../"))
+rel_path = str(files("parrotspeech").joinpath("../../"))
 
 
 def get_args():

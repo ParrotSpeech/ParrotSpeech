@@ -79,7 +79,7 @@ class TTSStreamingProcessor:
             if torch.backends.mps.is_available()
             else "cpu"
         )
-        model_cfg = OmegaConf.load(str(files("f5_tts").joinpath(f"configs/{model}.yaml")))
+        model_cfg = OmegaConf.load(str(files("parrotspeech").joinpath(f"configs/{model}.yaml")))
         self.model_cls = globals()[model_cfg.model.backbone]
         self.model_arc = model_cfg.model.arch
         self.mel_spec_type = model_cfg.model.mel_spec.mel_spec_type
@@ -223,7 +223,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--ckpt_file",
-        default=str(hf_hub_download(repo_id="SWivid/F5-TTS", filename="F5TTS_v1_Base/model_1250000.safetensors")),
+        default=str(hf_hub_download(repo_id="ParrotSpeech/ParrotSpeech", filename="F5TTS_v1_Base/model_1250000.safetensors")),
         help="Path to the model checkpoint file",
     )
     parser.add_argument(
@@ -234,7 +234,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--ref_audio",
-        default=str(files("f5_tts").joinpath("infer/examples/basic/basic_ref_en.wav")),
+        default=str(files("parrotspeech").joinpath("inference/examples/basic/basic_ref_en.wav")),
         help="Reference audio to provide model with speaker characteristics",
     )
     parser.add_argument(

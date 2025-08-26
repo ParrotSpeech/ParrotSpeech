@@ -81,7 +81,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-    checkpoint_path = str(files("f5_tts").joinpath(f"../../ckpts/{args.dataset_name}"))
+    checkpoint_path = str(files("parrotspeech").joinpath(f"../../ckpts/{args.dataset_name}"))
 
     # Model parameters based on experiment name
 

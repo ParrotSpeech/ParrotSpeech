@@ -24,7 +24,7 @@ from parrotspeech.model.utils import (
 )
 
 
-PRETRAINED_VOCAB_PATH = files("f5_tts").joinpath("../../data/your_training_dataset/vocab.txt")
+PRETRAINED_VOCAB_PATH = files("parrotspeech").joinpath("../../data/your_training_dataset/vocab.txt")
 
 
 def is_csv_wavs_format(input_dataset_dir):

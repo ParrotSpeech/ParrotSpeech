@@ -256,7 +256,7 @@ def load_dataset(
     print("Loading dataset ...")
 
     if dataset_type == "CustomDataset":
-        rel_data_path = str(files("f5_tts").joinpath(f"../../data/{dataset_name}"))
+        rel_data_path = str(files("parrotspeech").joinpath(f"../../data/{dataset_name}"))
         if audio_type == "raw":
             try:
                 train_dataset = load_from_disk(f"{rel_data_path}/raw")
@@ -297,7 +297,7 @@ def load_dataset(
         )
         pre, post = dataset_name.split("_")
         train_dataset = HFDataset(
-            load_dataset(f"{pre}/{pre}", split=f"train.{post}", cache_dir=str(files("f5_tts").joinpath("../../data"))),
+            load_dataset(f"{pre}/{pre}", split=f"train.{post}", cache_dir=str(files("parrotspeech").joinpath("../../data"))),
         )
 
     return train_dataset
