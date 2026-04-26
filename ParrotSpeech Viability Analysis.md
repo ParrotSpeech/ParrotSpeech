@@ -16,8 +16,9 @@ Published benchmarks and my own back-of-envelope on a Zen 4 core give roughly $3
 Concurrency math:
 
 $$
-\text{concurrent_requests} = \frac{\text{cores} \times \text{utilization} }{ \text{threads_per_req} } = \frac{48 \times 0.5}{4} = 6
+\text{concurrent\_requests} = \frac{\text{cores} \times \text{utilization}}{\text{threads\_per\_req}} = \frac{48 \times 0.5}{4} = 6
 $$
+
 
 Throughput:
 
