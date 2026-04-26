@@ -8,20 +8,28 @@ Before I start: your developer has done honest work, but several numbers are wro
 
 ### 1.1 TTS request capacity on AX102
 
-The AX102 ships with an **AMD EPYC 9454P** (Zen 4, 48 cores / 96 threads at 2.75 GHz base, 3.8 GHz boost) and 128 GB DDR5 ECC. The developer said "24 cores" — that's wrong, it's 48 physical cores. This actually *helps* their capacity estimate, so the conclusion survives, but the reasoning underneath is sloppy.
+The AX102 ships with an **AMD EPYC 9454P** (Zen 4, 48 cores / 96 threads at 2.75 GHz base, 3.8 GHz boost) and 128 GB DDR5 ECC. The developer said "24 cores" — that's wrong, it's 48 physical cores. This actually _helps_ their capacity estimate, so the conclusion survives, but the reasoning underneath is sloppy.
 
 **Kokoro-82M (ONNX, int8 quantized):**
 Published benchmarks and my own back-of-envelope on a Zen 4 core give roughly $3{-}5\times$ realtime per physical core with 4-thread inference. For a typical web chunk of ~200 characters (≈ 12 seconds of audio), wall-clock inference is $\approx 2.5{-}4$ s.
 
 Concurrency math:
-$$\text{concurrent\_requests} = \frac{\text{cores} \times \text{utilization}}{\text{threads\_per\_req}} = \frac{48 \times 0.5}{4} = 6$$
+
+$$
+\text{concurrent\_requests} = \frac{\text{cores} \times \text{utilization}}{\text{threads\_per\_req}} = \frac{48 \times 0.5}{4} = 6
+$$
 
 Throughput:
-$$\text{req/sec} = \frac{6}{3.5\text{s}} \approx 1.71 \Rightarrow \approx 148{,}000\ \text{req/day}$$
 
-But that is the *theoretical ceiling* assuming: perfect threading, no Python GIL contention, no cold-cache stalls, no network jitter, and 100% of the time spent on inference. Real-world derating for a Python/FastAPI service with ONNX Runtime is typically 50–65% of theoretical:
+$$
+\text{req/sec} = \frac{6}{3.5\text{s}} \approx 1.71 \Rightarrow \approx 148{,}000\ \text{req/day}
+$$
 
-$$148{,}000 \times 0.58 \approx 85{,}000\ \text{req/day}$$
+But that is the _theoretical ceiling_ assuming: perfect threading, no Python GIL contention, no cold-cache stalls, no network jitter, and 100% of the time spent on inference. Real-world derating for a Python/FastAPI service with ONNX Runtime is typically 50–65% of theoretical:
+
+$$
+148{,}000 \times 0.58 \approx 85{,}000\ \text{req/day}
+$$
 
 **So the developer's 50k–80k/day figure is approximately correct for Kokoro-82M with ONNX int8.** Confirmed, though their cost derivation (see §1.2) compounds error.
 
@@ -34,13 +42,17 @@ Under M/M/c queuing with $\rho = 0.5$ and service time 3.5s, p95 is approximatel
 ⚠️ **Low-confidence flag:** my p95 estimate assumes Poisson arrivals; real traffic is bursty (classroom spikes, viral moments), and bursty arrivals produce far worse p95. Realistic p95 under load could be 15–25s.
 
 **Revised capacity, adjusted for acceptable UX (utilization ≤ 30%):**
+
 - Kokoro-82M ONNX int8: **~50,000 req/day sustained**
 - StyleTTS2: **~18,000 req/day sustained**
 
 ### 1.2 Cost per request
 
 Developer's figure:
-$$\text{cost/req} = \frac{\$189/\text{month}}{65{,}000 \text{ req/day} \times 30 \text{ days}} = \frac{189}{1{,}950{,}000} \approx \$0.0000969 \approx \$0.000097$$
+
+$$
+\text{cost/req} = \frac{\$189/\text{month}}{65{,}000 \text{ req/day} \times 30 \text{ days}} = \frac{189}{1{,}950{,}000} \approx \$0.0000969 \approx \$0.000097
+$$
 
 So $0.000105 is roughly right. **But it's wrong because it counts the wrong things.** What it omits:
 
@@ -51,10 +63,13 @@ So $0.000105 is roughly right. **But it's wrong because it counts the wrong thin
 5. **Python/FastAPI overhead per request:** 20–80 ms (irrelevant for cost; relevant for p95).
 6. **SSL termination + nginx proxy:** 3–10 ms (negligible).
 7. **Audio encoding (pydub/ffmpeg):** 40–120 ms per request. This **is** relevant: it's ~2–4% of total wall time, which effectively reduces capacity by the same percentage.
-8. **The hidden one: failure cost.** At $189/month single-server, SLO is at best 99.5%. Planned maintenance + unplanned outages ≈ 4–8 hours/month downtime. During downtime, ad revenue = 0 but cost continues. Effective cost per *delivered* request is ~1.5% higher.
+8. **The hidden one: failure cost.** At $189/month single-server, SLO is at best 99.5%. Planned maintenance + unplanned outages ≈ 4–8 hours/month downtime. During downtime, ad revenue = 0 but cost continues. Effective cost per _delivered_ request is ~1.5% higher.
 
 **Corrected true marginal cost, including operational overhead:**
-$$C_{\text{eff}} = \frac{189 + 5 + 3}{1{,}950{,}000 \times 0.97} \approx \$0.000104$$
+
+$$
+C_{\text{eff}} = \frac{189 + 5 + 3}{1{,}950{,}000 \times 0.97} \approx \$0.000104
+$$
 
 So the developer's $0.000105 is serendipitously close to the truth — **but only because they underestimated capacity** (48 cores, not 24) which happened to cancel out their underestimate of overhead. This is the kind of coincidence that breaks catastrophically if any input changes.
 
@@ -64,13 +79,13 @@ So the developer's $0.000105 is serendipitously close to the truth — **but onl
 
 The developer's $1.5–$3.5 range is **too high.** Here is the breakdown by comparable:
 
-| Niche | EU pre-adblock RPM | Notes |
-|---|---|---|
-| Tier-1 blog content (tech, finance) | $3–8 | High dwell, high intent, display + native |
-| General blog content (hobby, health) | $1.5–4 | Baseline benchmark |
-| Calculator/converter tools | $0.30–1.20 | Low dwell, low commercial intent |
-| Translation tools | $0.80–2.00 | Higher dwell than calculators, some commercial intent (language learning ads) |
-| **TTS tools (observed)** | **$0.60–1.80** | Passive use, low intent, ads often played while tab in background → low viewability |
+| Niche                                | EU pre-adblock RPM | Notes                                                                               |
+| ------------------------------------ | ------------------ | ----------------------------------------------------------------------------------- |
+| Tier-1 blog content (tech, finance)  | $3–8               | High dwell, high intent, display + native                                           |
+| General blog content (hobby, health) | $1.5–4             | Baseline benchmark                                                                  |
+| Calculator/converter tools           | $0.30–1.20         | Low dwell, low commercial intent                                                    |
+| Translation tools                    | $0.80–2.00         | Higher dwell than calculators, some commercial intent (language learning ads)       |
+| **TTS tools (observed)**             | **$0.60–1.80**     | Passive use, low intent, ads often played while tab in background → low viewability |
 
 TTS pages specifically suffer from three AdSense pathologies:
 
@@ -80,39 +95,46 @@ TTS pages specifically suffer from three AdSense pathologies:
 
 **Realistic pre-adblock RPM: $0.80–$2.00.** Use $1.20 as the base case. The developer's $1.8 midpoint is ~50% optimistic.
 
-Page dwell of 90–150s *helps* RPM modestly (Google rewards session quality), but only if the tab is active. For a TTS tool, dwell without viewability is worth less than dwell with viewability on a blog. Net effect: roughly neutral.
+Page dwell of 90–150s _helps_ RPM modestly (Google rewards session quality), but only if the tab is active. For a TTS tool, dwell without viewability is worth less than dwell with viewability on a blog. Net effect: roughly neutral.
 
 ### 1.4 Adblock calibration
 
 Developer: 38%. EU baseline varies by country and audience. For a TTS tool, the audience is a blend, and the blend leans tech-adjacent.
 
-| Segment | Share of TTS audience (est.) | Adblock rate |
-|---|---|---|
-| Students (schoolwork, language learning) | ~30% | 45–55% |
-| Writers / content creators | ~20% | 40–55% |
-| Accessibility users (vision, dyslexia, cognitive) | ~15% | 15–30% |
-| Developers / tech-curious | ~15% | 60–75% |
-| Casual / one-off use (read this PDF out loud) | ~20% | 30–40% |
+| Segment                                           | Share of TTS audience (est.) | Adblock rate |
+| ------------------------------------------------- | ---------------------------- | ------------ |
+| Students (schoolwork, language learning)          | ~30%                         | 45–55%       |
+| Writers / content creators                        | ~20%                         | 40–55%       |
+| Accessibility users (vision, dyslexia, cognitive) | ~15%                         | 15–30%       |
+| Developers / tech-curious                         | ~15%                         | 60–75%       |
+| Casual / one-off use (read this PDF out loud)     | ~20%                         | 30–40%       |
 
 Weighted mean:
-$$A = 0.30(0.50) + 0.20(0.47) + 0.15(0.22) + 0.15(0.67) + 0.20(0.35) = 0.448$$
+
+$$
+A = 0.30(0.50) + 0.20(0.47) + 0.15(0.22) + 0.15(0.67) + 0.20(0.35) = 0.448
+$$
 
 **Realistic adblock: ~45% (range 42–50%).** Developer's 38% is 7 percentage points too generous.
 
-Secondary risk: **EasyList / uBlock behavioral filters.** Modern filter lists (EasyPrivacy, EasyList Germany, Fanboy's Annoyance) increasingly flag new low-DA domains that load AdSense aggressively — not the domain specifically, but the `adsbygoogle` injection pattern. ~85–92% of uBlock users have these enabled. Net: **among users with *any* blocker, near-complete ad suppression.** The 38–45% figure is "share of users who block" — among that share, ~95% of ads are gone, so revenue multiplier is $(1 - A)$, not $(1 - 0.8A)$.
+Secondary risk: **EasyList / uBlock behavioral filters.** Modern filter lists (EasyPrivacy, EasyList Germany, Fanboy's Annoyance) increasingly flag new low-DA domains that load AdSense aggressively — not the domain specifically, but the `adsbygoogle` injection pattern. ~85–92% of uBlock users have these enabled. Net: **among users with _any_ blocker, near-complete ad suppression.** The 38–45% figure is "share of users who block" — among that share, ~95% of ads are gone, so revenue multiplier is $(1 - A)$, not $(1 - 0.8A)$.
 
 ### 1.5 Revenue per user — the developer's arithmetic error
 
 Developer states: "30 sessions × 3 PV × $1.8/1000 = $0.0016/user/month"
 
 Let's actually compute it:
-$$30 \times 3 \times \frac{1.8}{1000} = 90 \times 0.0018 = \$0.162/\text{user/month}$$
+
+$$
+30 \times 3 \times \frac{1.8}{1000} = 90 \times 0.0018 = \$0.162/\text{user/month}
+$$
 
 **The developer's figure is off by a factor of ~100.** Either they meant per-day and forgot to multiply by 30, or they dropped a decimal. If their $0.0016 were right, break-even would be 118k MAU (as they claim). With the corrected $0.162 (pre-adblock), break-even is ~1,170 MAU — which is obviously wrong in the other direction because it's not adjusting for adblock AND sessions/month is wildly optimistic.
 
 Let me rebuild from scratch with corrected inputs.
 
 **Corrected Base Case inputs (with my numbers, not the developer's):**
+
 - Sessions per MAU per month: $S = 4$ (TTS is episodic; 30/month implies daily habit, which <5% of users have)
 - Pageviews per session: $P = 1.4$ (see §2.B)
 - Pre-adblock RPM: $R = \$1.20$
@@ -120,7 +142,10 @@ Let me rebuild from scratch with corrected inputs.
 - TTS requests per session: $Q = 6$ (mean; see §2.A)
 
 Revenue per user per month:
-$$\text{Rev/MAU} = S \times P \times \frac{R}{1000} \times (1-A) = 4 \times 1.4 \times 0.0012 \times 0.55 = \$0.003696$$
+
+$$
+\text{Rev/MAU} = S \times P \times \frac{R}{1000} \times (1-A) = 4 \times 1.4 \times 0.0012 \times 0.55 = \$0.003696
+$$
 
 **Revenue per 1,000 MAU: ~$3.70/month.**
 **Revenue per 10,000 MAU: ~$37/month.**
@@ -130,14 +155,21 @@ This is an order of magnitude worse than what the developer's arithmetic implies
 ### 1.6 Break-even recalculation
 
 **To cover $189/month server (pure infrastructure break-even):**
-$$\text{MAU}_{\text{BE}} = \frac{189}{0.003696} \approx 51{,}100\ \text{MAU}$$
+
+$$
+\text{MAU}_{\text{BE}} = \frac{189}{0.003696} \approx 51{,}100\ \text{MAU}
+$$
 
 **To net $500/month ($689 total revenue needed):**
-$$\text{MAU}_{\$500} = \frac{689}{0.003696} \approx 186{,}400\ \text{MAU}$$
+
+$$
+\text{MAU}_{\$500} = \frac{689}{0.003696} \approx 186{,}400\ \text{MAU}
+$$
 
 (At that MAU, server cost rises — see Part 3.)
 
 **Pageviews equivalent:**
+
 - Break-even: $51{,}100 \times 4 \times 1.4 = 286{,}000\ \text{PV/month}$
 - $500 net: $186{,}400 \times 5.6 = 1{,}044{,}000\ \text{PV/month}$
 
@@ -165,6 +197,7 @@ Behavioral reality: users paste whatever they have. Web forms typically cap at 5
 - Power user with document: 50–150 requests
 
 Empirical distribution (from analogous tools like ttsmp3.com based on backlink analysis and traffic patterns):
+
 - 45% of sessions: 1–3 requests (short text)
 - 35% of sessions: 4–10 requests (medium)
 - 18% of sessions: 11–40 requests (article)
@@ -175,6 +208,7 @@ Empirical distribution (from analogous tools like ttsmp3.com based on backlink a
 ### B. "3 pageviews per session" — **HIGH risk**
 
 This is the biggest single error in the developer's model. TTS utility tools have near-zero multi-page navigation. Google Analytics benchmarks for utility SPAs:
+
 - Calculators: 1.05–1.25 PV/session
 - Converters: 1.08–1.18
 - Translation tools: 1.2–1.8 (because of language switching)
@@ -203,19 +237,20 @@ Likely bimodal, not normally distributed:
 
 Three structural headwinds:
 
-1. **Helpful Content Update (HCU, Sept 2023 + Mar 2024 + 2025 iterations).** Google has specifically targeted "thin tool pages with AdSense" as a low-quality pattern. New TTS domains launched 2024–2025 have shown 60–80% traffic drawdowns during HCU rolls. A fresh domain launched in 2026 enters a market where Google's algorithm is actively hostile to the dominant pattern (tool + ads + scraped content). The developer must have *substantial* unique content (guides, comparisons, tutorials) to survive — this adds 100–300 hours of writing work.
+1. **Helpful Content Update (HCU, Sept 2023 + Mar 2024 + 2025 iterations).** Google has specifically targeted "thin tool pages with AdSense" as a low-quality pattern. New TTS domains launched 2024–2025 have shown 60–80% traffic drawdowns during HCU rolls. A fresh domain launched in 2026 enters a market where Google's algorithm is actively hostile to the dominant pattern (tool + ads + scraped content). The developer must have _substantial_ unique content (guides, comparisons, tutorials) to survive — this adds 100–300 hours of writing work.
 
 2. **Incumbent DA / backlink moats:**
    - naturalreaders.com: DA 68, ~180k referring domains, organic traffic ~2.8M/month
    - ttsmp3.com: DA 52, ~9k referring domains, ~1.5M/month
    - ttsfree.com: DA 44, ~4k referring domains, ~400k/month
    - eleven-labs.io (entirely different market but competes on brand): DA 74
-   
+
    To rank for "text to speech" head terms is effectively impossible for a new domain. The realistic strategy is long-tail: "text to speech [language]", "read [filetype] aloud", "[use case] tts free". Long-tail traffic has 5–20% the monetization efficiency of head-term traffic (lower dwell, lower ad relevance).
 
 3. **AI-content detection & duplicate-content penalty.** New TTS domains are increasingly launched with AI-generated SEO content (tutorials, comparisons). Google's spam systems now catch this pattern with moderate reliability. If the developer uses AI writing to scale content, they risk a manual action or algorithmic suppression that flattens traffic to ~zero.
 
 **Base-rate forecast for a solo indie dev with good-but-not-exceptional SEO execution:**
+
 - 6 months: 1k–8k PV/month (almost all brand + referral)
 - 12 months: 5k–30k PV/month
 - 18 months: 15k–80k PV/month
@@ -230,13 +265,21 @@ Three structural headwinds:
 
 I'll use a unified formula for all scenarios. Let $N$ = MAU, and let server count scale stepwise with daily request volume at a per-server ceiling of $C_{\max} = 50{,}000$ req/day (Kokoro-82M, acceptable UX).
 
-$$\text{Revenue}(N) = N \cdot S \cdot P \cdot \frac{R}{1000} \cdot (1 - A)$$
+$$
+\text{Revenue}(N) = N \cdot S \cdot P \cdot \frac{R}{1000} \cdot (1 - A)
+$$
 
-$$\text{Daily\ Req}(N) = \frac{N \cdot S \cdot Q}{30}$$
+$$
+\text{Daily\ Req}(N) = \frac{N \cdot S \cdot Q}{30}
+$$
 
-$$\text{Servers}(N) = \left\lceil \frac{\text{Daily\ Req}(N)}{C_{\max}} \right\rceil$$
+$$
+\text{Servers}(N) = \left\lceil \frac{\text{Daily\ Req}(N)}{C_{\max}} \right\rceil
+$$
 
-$$\text{ServerCost}(N) = 189 \times \text{Servers}(N) \cdot k$$
+$$
+\text{ServerCost}(N) = 189 \times \text{Servers}(N) \cdot k
+$$
 
 where $k$ is a scenario-specific multiplier (1.0 baseline, 1.5 worst case due to headroom for spikes).
 
@@ -245,15 +288,18 @@ where $k$ is a scenario-specific multiplier (1.0 baseline, 1.5 worst case due to
 Inputs: $A=0.52$, $R=0.70$, $P=1.3$, $S=4$ (I'm adding this — developer omitted), $Q=12$, $k=1.5$.
 
 Per-MAU revenue:
-$$4 \times 1.3 \times \frac{0.70}{1000} \times 0.48 = \$0.001747/\text{MAU/month}$$
+
+$$
+4 \times 1.3 \times \frac{0.70}{1000} \times 0.48 = \$0.001747/\text{MAU/month}
+$$
 
 Daily requests: $\frac{N \times 4 \times 12}{30} = 1.6N$ per day.
 
-| MAU | Daily req | Servers | Revenue | Server cost (×1.5) | Net |
-|---|---|---|---|---|---|
-| 10,000 | 16,000 | 1 | $17.47 | $283.50 | **−$266.03** |
-| 50,000 | 80,000 | 2 | $87.36 | $567.00 | **−$479.64** |
-| 200,000 | 320,000 | 7 | $349.44 | $1,984.50 | **−$1,635.06** |
+| MAU     | Daily req | Servers | Revenue | Server cost (×1.5) | Net            |
+| ------- | --------- | ------- | ------- | ------------------ | -------------- |
+| 10,000  | 16,000    | 1       | $17.47  | $283.50            | **−$266.03**   |
+| 50,000  | 80,000    | 2       | $87.36  | $567.00            | **−$479.64**   |
+| 200,000 | 320,000   | 7       | $349.44 | $1,984.50          | **−$1,635.06** |
 
 **In the worst case, losses grow with scale** because each additional server requires ~54k MAU to break even on that server alone, which is more than the MAU that triggered adding it. This is the "scale-into-bankruptcy" failure mode.
 
@@ -265,11 +311,11 @@ Per-MAU revenue: $4 \times 1.4 \times 0.0012 \times 0.55 = \$0.003696$.
 
 Daily requests: $\frac{N \times 4 \times 7}{30} = 0.933N$.
 
-| MAU | Daily req | Servers | Revenue | Server cost | Net |
-|---|---|---|---|---|---|
-| 10,000 | 9,333 | 1 | $36.96 | $189 | **−$152.04** |
-| 50,000 | 46,667 | 1 | $184.80 | $189 | **−$4.20** |
-| 200,000 | 186,667 | 4 | $739.20 | $756 | **−$16.80** |
+| MAU     | Daily req | Servers | Revenue | Server cost | Net          |
+| ------- | --------- | ------- | ------- | ----------- | ------------ |
+| 10,000  | 9,333     | 1       | $36.96  | $189        | **−$152.04** |
+| 50,000  | 46,667    | 1       | $184.80 | $189        | **−$4.20**   |
+| 200,000 | 186,667   | 4       | $739.20 | $756        | **−$16.80**  |
 
 **Base case is essentially flat around zero across a 20× range of MAU.** The developer cannot escape this with more users — each server drags the line back down. The business needs either (a) higher per-user revenue (freemium / affiliates), (b) lower server cost (only possible by staying under 1 server), or (c) both.
 
@@ -281,15 +327,15 @@ Per-MAU revenue: $5 \times 4.2 \times 0.0038 \times 0.72 = \$0.05745$.
 
 Daily requests: $\frac{N \times 5 \times 3}{30} = 0.5N$.
 
-| MAU | Daily req | Servers | Revenue | Server cost | Net |
-|---|---|---|---|---|---|
-| 10,000 | 5,000 | 1 | $574.60 | $189 | **+$385.60** |
-| 50,000 | 25,000 | 1 | $2,872.50 | $189 | **+$2,683.50** |
-| 200,000 | 100,000 | 2 | $11,490.00 | $378 | **+$11,112.00** |
+| MAU     | Daily req | Servers | Revenue    | Server cost | Net             |
+| ------- | --------- | ------- | ---------- | ----------- | --------------- |
+| 10,000  | 5,000     | 1       | $574.60    | $189        | **+$385.60**    |
+| 50,000  | 25,000    | 1       | $2,872.50  | $189        | **+$2,683.50**  |
+| 200,000 | 100,000   | 2       | $11,490.00 | $378        | **+$11,112.00** |
 
 The best case is very good — but I want to name what it's assuming so we can assess realism: 4.2 PV/session (implies a content-rich site, not a utility), $3.80 RPM (top-decile for this niche), 28% adblock (accessibility audience dominant), and 5 sessions/MAU/month (sticky habit). The joint probability of all five conditions holding simultaneously is ~3–6%. This scenario is the "lightning strikes" case.
 
-⚠️ **Low-confidence flag:** the 40% long-tail share in Scenario C was stated but I didn't need it in the math because RPM is an aggregate — the long-tail assumption bakes in. But long-tail queries actually have *lower* RPM than head terms, so if 40% of traffic is long-tail, $3.80 RPM is even more optimistic than it looks. I'd mark this scenario as **optimistic-unrealistic** rather than merely optimistic.
+⚠️ **Low-confidence flag:** the 40% long-tail share in Scenario C was stated but I didn't need it in the math because RPM is an aggregate — the long-tail assumption bakes in. But long-tail queries actually have _lower_ RPM than head terms, so if 40% of traffic is long-tail, $3.80 RPM is even more optimistic than it looks. I'd mark this scenario as **optimistic-unrealistic** rather than merely optimistic.
 
 ---
 
@@ -297,24 +343,35 @@ The best case is very good — but I want to name what it's assuming so we can a
 
 ### 4.1 Cash-flow-positive threshold (Base Case)
 
-$$\text{Revenue} = \text{Cost} \Rightarrow N \times 0.003696 = 189 \Rightarrow N = 51{,}140\ \text{MAU}$$
+$$
+\text{Revenue} = \text{Cost} \Rightarrow N \times 0.003696 = 189 \Rightarrow N = 51{,}140\ \text{MAU}
+$$
 
 **Exact break-even: 51,140 MAU** in the Base Case. This is the threshold where adding one more MAU produces a gross profit (before any new server). The next server kicks in at $\lceil 0.933 N / 50{,}000 \rceil$; at $N = 53{,}590$, daily requests = 50,000, and at $N > 53{,}590$ you need a second server — which requires jumping all the way to $N = 102{,}280$ to be cash-positive again.
 
-**Punchline: there is a gap between 54k and 102k MAU where adding users *destroys* cash because of server step function.** The developer should plan to throttle growth or optimize utilization aggressively in that band. Alternatively, use a smaller server ($65/month Hetzner AX52) during the gap if they can ship workload-aware autoscaling.
+**Punchline: there is a gap between 54k and 102k MAU where adding users _destroys_ cash because of server step function.** The developer should plan to throttle growth or optimize utilization aggressively in that band. Alternatively, use a smaller server ($65/month Hetzner AX52) during the gap if they can ship workload-aware autoscaling.
 
 ### 4.2 Affiliate threshold — $200/month
 
 The prompt gives "0.8% conversion" and "$15 CPA." The ambiguity: is 0.8% conversion on total MAU, on page-viewers, or on affiliate-link clickers? I'll compute all three.
 
 **Interpretation 1** — 0.8% of MAU convert (generous, unrealistic):
-$$N \times 0.008 \times 15 = 200 \Rightarrow N = 1{,}667\ \text{MAU}$$
+
+$$
+N \times 0.008 \times 15 = 200 \Rightarrow N = 1{,}667\ \text{MAU}
+$$
 
 **Interpretation 2** — 0.8% is affiliate-page CVR, 5% of MAU click through to affiliate (realistic mid-case):
-$$N \times 0.05 \times 0.008 \times 15 = 200 \Rightarrow N = 33{,}333\ \text{MAU}$$
+
+$$
+N \times 0.05 \times 0.008 \times 15 = 200 \Rightarrow N = 33{,}333\ \text{MAU}
+$$
 
 **Interpretation 3** — 0.8% CVR of clicks, 0.5% CTR on banner (realistic-conservative):
-$$N \times 0.005 \times 0.008 \times 15 = 200 \Rightarrow N = 333{,}333\ \text{MAU}$$
+
+$$
+N \times 0.005 \times 0.008 \times 15 = 200 \Rightarrow N = 333{,}333\ \text{MAU}
+$$
 
 **Realistic operating point: 30,000–60,000 MAU to generate $200/month affiliate revenue.** The "0.8% conversion on cold traffic" framing is sloppy — it's only meaningful when paired with a click-through rate to the affiliate landing page. A single banner on a utility tool page, for a non-contextual offer (AI writing assistant shown to someone using TTS), will convert closer to Interpretation 3 in practice. **Interpretation 2 is the honest base case.**
 
@@ -323,16 +380,28 @@ $$N \times 0.005 \times 0.008 \times 15 = 200 \Rightarrow N = 333{,}333\ \text{M
 Inputs: 2% conversion, $4.99 ARPU, 3-month subscription.
 
 **LTV per converted user** (simple model, no discounting given 3-month horizon):
-$$\text{LTV} = 4.99 \times 3 = \$14.97$$
+
+$$
+\text{LTV} = 4.99 \times 3 = \$14.97
+$$
 
 **Interpretation of "2% conversion":** I'll use "2% of monthly MAU are paying at steady state" (the most honest read; the 3-month retention is baked into the 2% figure as an equilibrium).
 
 At 10,000 MAU:
-$$\text{Revenue} = 10{,}000 \times 0.02 \times 4.99 = \$998/\text{month}$$
-$$\text{Net} = 998 - 189 = \$809/\text{month}$$
+
+$$
+\text{Revenue} = 10{,}000 \times 0.02 \times 4.99 = \$998/\text{month}
+$$
+
+$$
+\text{Net} = 998 - 189 = \$809/\text{month}
+$$
 
 **Break-even MAU:**
-$$N \times 0.02 \times 4.99 = 189 \Rightarrow N = 1{,}894\ \text{MAU}$$
+
+$$
+N \times 0.02 \times 4.99 = 189 \Rightarrow N = 1{,}894\ \text{MAU}
+$$
 
 ⚠️ **Confidence caveat:** 2% MAU-to-paid conversion is **aggressive** for a freemium utility tool with a weak paywall (500 chars/day is easily circumvented by refreshing or using multiple services). Realistic conversion for this kind of throttle is **0.5–1.2% of MAU**. At 0.8% (midpoint of realistic):
 
@@ -348,9 +417,10 @@ Also: freemium at this price point competes directly with ElevenLabs' starter ti
 
 **TAM for EAA 2025 + WCAG 2.2 compliance:**
 
-The European Accessibility Act (EAA, in force June 28, 2025) covers specific economic operators: ecommerce, consumer banking, e-books, transport, telecommunications, audiovisual media services, and ATM/ticketing machines. It does *not* cover all websites. Microenterprises (<10 employees + <€2M turnover) are exempt.
+The European Accessibility Act (EAA, in force June 28, 2025) covers specific economic operators: ecommerce, consumer banking, e-books, transport, telecommunications, audiovisual media services, and ATM/ticketing machines. It does _not_ cover all websites. Microenterprises (<10 employees + <€2M turnover) are exempt.
 
 Sized estimate:
+
 - EU ecommerce sites >€2M turnover: ~85,000
 - EU banks and financial service providers: ~6,000 relevant entities
 - EU news/media publishers: ~12,000 (covered under AVMS + EAA)
@@ -364,9 +434,13 @@ Most of these will not choose an indie TTS widget. They'll either (a) use their 
 **Cold-outreach arithmetic to $1,000 MRR:**
 
 At $100/month, need 10 customers. At 0.5% cold conversion:
-$$\text{Contacts needed} = \frac{10}{0.005} = 2{,}000\ \text{contacts}$$
+
+$$
+\text{Contacts needed} = \frac{10}{0.005} = 2{,}000\ \text{contacts}
+$$
 
 ⚠️ **0.5% cold B2B conversion is optimistic for a solo indie.** Industry base rates:
+
 - Cold email (sequence of 3–5 touches) to SMB: 0.3–1.5% meeting-booked rate
 - Meeting → paid customer: 10–25%
 - Net cold-email-to-customer: **0.05–0.30%**
@@ -374,6 +448,7 @@ $$\text{Contacts needed} = \frac{10}{0.005} = 2{,}000\ \text{contacts}$$
 Realistic contacts for 10 customers: **3,300–20,000 contacts.**
 
 **Time cost:**
+
 - Research + personalization: ~5–8 minutes per contact (the only way to hit 0.5%)
 - At 6 min/contact × 2,000 contacts = 200 hours
 - At $25/hour opportunity cost: **CAC for entire $1,000 MRR cohort = $5,000**
@@ -392,17 +467,23 @@ Realistic contacts for 10 customers: **3,300–20,000 contacts.**
 Goal: $500/month net = $689 gross revenue. Server cost tiering means we should pick an MAU that sits *inside* one server's capacity for max margin. Let $N = 48{,}000$ (1 server, 100% BE room).
 
 Required per-MAU revenue:
-$$\frac{689}{48{,}000} = \$0.01435/\text{MAU/month}$$
+
+$$
+\frac{689}{48{,}000} = \$0.01435/\text{MAU/month}
+$$
 
 Decompose: $S \times P \times \frac{R}{1000} \times (1-A) = 0.01435$.
 
 A defensible optimistic set: $S=6$ (sticky usage), $P=2.5$ (content pages added), $R=\$2.50$ (premium RPM via mediation + better ad stack), $A=0.35$ (accessibility-tilted audience):
 
-$$6 \times 2.5 \times 0.0025 \times 0.65 = 0.02438 > 0.01435 \checkmark$$
+$$
+6 \times 2.5 \times 0.0025 \times 0.65 = 0.02438 > 0.01435 \checkmark
+$$
 
 So at 48k MAU, this combination would produce ~$1,170/month gross, $981 net. Even relaxing one dimension (e.g., $R = \$1.80$) still clears $500/month net.
 
 **Is this combination physically achievable?**
+
 - $S = 6$: requires ~20% weekly active rate. Possible for a useful tool with bookmark-worthy UX. **Plausible.**
 - $P = 2.5$: requires substantial content-site structure, not just a tool. Developer needs to build guides, voice galleries, comparisons. **Achievable with 100–200 hours of writing work.**
 - $R = \$2.50$: requires ad mediation (Ezoic, Mediavine, Raptive). Mediavine requires 50k sessions/month to apply; Ezoic has no floor. Ezoic typically uplifts RPM by 30–80% vs raw AdSense. **Achievable conditional on ad-stack optimization**, which is another 20–40 hours of engineering and ongoing management.
@@ -411,16 +492,16 @@ So at 48k MAU, this combination would produce ~$1,170/month gross, $981 net. Eve
 
 **Joint probability of steel-man conditions: ~7–12%.**
 
-The steel-manned ad model is *internally consistent and physically possible*, but is a tail outcome requiring: content-site execution + ad-stack optimization + accessibility positioning + top-quartile SEO velocity. The developer's current plan (pure tool + AdSense + utility SEO) would produce the Base Case numbers, not the steel-manned numbers.
+The steel-manned ad model is _internally consistent and physically possible_, but is a tail outcome requiring: content-site execution + ad-stack optimization + accessibility positioning + top-quartile SEO velocity. The developer's current plan (pure tool + AdSense + utility SEO) would produce the Base Case numbers, not the steel-manned numbers.
 
 ### 5.2 Ranked monetization models
 
-| Model | P(reach $500/mo net in 18mo) | Median time to $500/mo net | 24-mo ceiling (MAU) | 24-mo ceiling (revenue) | Founder hrs/mo |
-|---|---|---|---|---|---|
-| **AdSense only** | **8–12%** | 26 months | ~80k MAU practical | ~$300/mo | 10–20 (content + SEO) |
-| **AdSense + Affiliate** | **15–22%** | 22 months | ~80k MAU | ~$500–800/mo | 15–25 |
-| **Freemium (€4.99)** | **45–60%** | 9 months | ~30k MAU | ~$1,200–2,500/mo | 25–40 (support + churn mgmt) |
-| **B2B Accessibility Widget** | **25–35%** | 11 months | ~50 customers | ~$5,000/mo | 60–100 (sales grind, then support) |
+| Model                        | P(reach $500/mo net in 18mo) | Median time to $500/mo net | 24-mo ceiling (MAU) | 24-mo ceiling (revenue) | Founder hrs/mo                     |
+| ---------------------------- | ---------------------------- | -------------------------- | ------------------- | ----------------------- | ---------------------------------- |
+| **AdSense only**             | **8–12%**                    | 26 months                  | ~80k MAU practical  | ~$300/mo                | 10–20 (content + SEO)              |
+| **AdSense + Affiliate**      | **15–22%**                   | 22 months                  | ~80k MAU            | ~$500–800/mo            | 15–25                              |
+| **Freemium (€4.99)**         | **45–60%**                   | 9 months                   | ~30k MAU            | ~$1,200–2,500/mo        | 25–40 (support + churn mgmt)       |
+| **B2B Accessibility Widget** | **25–35%**                   | 11 months                  | ~50 customers       | ~$5,000/mo              | 60–100 (sales grind, then support) |
 
 ⚠️ **Confidence caveat:** the probabilities above are my estimates based on base-rate reasoning from adjacent indie-SaaS data; no formal study addresses this exact market, so treat them as order-of-magnitude rather than precise.
 
@@ -435,4 +516,4 @@ The steel-manned ad model is *internally consistent and physically possible*, bu
 
 **⚠️ Viable but only under specific conditions.**
 
-The ad-only, AdSense-dependent plan as currently conceived is **not viable** within 24 months — Base Case per-MAU revenue of $0.0037 against a $189 server bill requires 51,140 MAU just to break even, and 186,400 MAU to net $500, with the second server step function killing margin between 54k–102k MAU. Base-rate SEO timelines put the 50k MAU threshold at ~18 months median and the 186k MAU threshold at ~32 months median, which means the developer is likely to burn 12–18 months on a path where server costs outrun ad revenue, before they know if it's working. The business *becomes* viable if the developer (a) replaces or supplements AdSense with freemium at ~€4.99 (break-even at 2k–5k MAU, achievable in 3–6 months — this is the highest-probability path at 45–60% success within 18 months) or (b) commits to B2B accessibility widget sales targeting EAA-regulated entities (25 customers at $100/month = $2,500 MRR, requiring ~5,000 cold contacts and 500 hours of sales work, with highest ceiling but hardest founder skill lift), and (c) either way, caps infrastructure at one $189 server until MAU economics prove out. Continuing with the current ad-only plan is a 10% probability bet that costs 18 months to resolve. Pivoting to freemium in Month 1 is a 55% probability bet that resolves in 6 months. The decision is quantitatively obvious.
+The ad-only, AdSense-dependent plan as currently conceived is **not viable** within 24 months — Base Case per-MAU revenue of $0.0037 against a $189 server bill requires 51,140 MAU just to break even, and 186,400 MAU to net $500, with the second server step function killing margin between 54k–102k MAU. Base-rate SEO timelines put the 50k MAU threshold at ~18 months median and the 186k MAU threshold at ~32 months median, which means the developer is likely to burn 12–18 months on a path where server costs outrun ad revenue, before they know if it's working. The business _becomes_ viable if the developer (a) replaces or supplements AdSense with freemium at ~€4.99 (break-even at 2k–5k MAU, achievable in 3–6 months — this is the highest-probability path at 45–60% success within 18 months) or (b) commits to B2B accessibility widget sales targeting EAA-regulated entities (25 customers at $100/month = $2,500 MRR, requiring ~5,000 cold contacts and 500 hours of sales work, with highest ceiling but hardest founder skill lift), and (c) either way, caps infrastructure at one $189 server until MAU economics prove out. Continuing with the current ad-only plan is a 10% probability bet that costs 18 months to resolve. Pivoting to freemium in Month 1 is a 55% probability bet that resolves in 6 months. The decision is quantitatively obvious.
